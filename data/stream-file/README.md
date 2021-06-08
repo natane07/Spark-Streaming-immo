@@ -1,0 +1,1 @@
+Dossier pour stocker les stream pour les jointures
