@@ -1,9 +1,9 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
-// Case 4 : Nombre de vente par region
+// Case 5 :  Nombre d'enregistrement par type de local et de region
 
-object transformation_4 extends App{
+object transformation_5 extends App{
   val spark = SparkSession
     .builder()
     .config("spark.sql.shuffle.partitions","5")
@@ -22,7 +22,7 @@ object transformation_4 extends App{
   // Création d'une variable qui contient le shema
   val shemaDataframeImmo = staticDataFrameImmo.schema
 
-  // Create dataframe region
+  //   Create dataframe region
   var staticDataFrameRegion = spark.read.format("csv")
     .option("header", "true")
     .load("C:/Users/MOI/dev/Spark-Streaming-immo/data/departement/departments.csv")
@@ -42,14 +42,14 @@ object transformation_4 extends App{
     .format("csv")
     .load("C:/Users/MOI/dev/Spark-Streaming-immo/data/immo-split/*.csv")
 
-    // STREAMING Region
+  // STREAMING Region
   var streamingDataFrameRegion = spark.readStream
     .schema(shemaDataframeRegion)
     .option("maxFilesPerTrigger", 1)
     .format("csv")
     .load("C:/Users/MOI/dev/Spark-Streaming-immo/data/departement/")
 
-//   Jointure des DF
+  //   Jointure des DF
   val streamSparktest = streamingDataFrameImmo.join(
     streamingDataFrameRegion,
     streamingDataFrameImmo("code_departement") ===  streamingDataFrameRegion("code"),
@@ -74,7 +74,8 @@ object transformation_4 extends App{
   val streamSpark = streamingDataFrameJoin.withColumn("timestamp", unix_timestamp(col("date_mutation"), "y-M-d"))
     .withColumn("timestamp", to_timestamp(col("timestamp")))
     .withWatermark("timestamp", "1 days")
-    .groupBy("region_code")
+    .na.drop("all", Seq("type_local"))
+    .groupBy("type_local", "region_code")
     .count()
 
   // Write stream
